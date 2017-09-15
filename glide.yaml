@@ -1,0 +1,4 @@
+package: github.com/UKHomeOffice/cfssl-sidekick
+import:
+- package: github.com/sirupsen/logrus
+- package: github.com/urfave/cli
