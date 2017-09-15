@@ -34,20 +34,20 @@ func main() {
 
 		Flags: []cli.Flag{
 			cli.StringFlag{
-				Name:   "cfssl-token",
+				Name:   "token",
 				Usage:  "a authentication token for cfssl `TOKEN`",
-				EnvVar: "CFSSL_TOKEN",
+				EnvVar: "TOKEN",
 			},
 			cli.StringFlag{
-				Name:   "cfssl-url",
+				Name:   "url",
 				Usage:  "a cfssl endpoint url for the service `URL`",
-				EnvVar: "CFSSL_URL",
+				EnvVar: "URL",
 				Value:  "https://ca.kube-tls.svc.cluster.local",
 			},
 			cli.StringFlag{
-				Name:   "cfssl-profile",
+				Name:   "profile",
 				Usage:  "a cfssl profile to use when requesting a certificated `NAME`",
-				EnvVar: "CFSSL_PROFILE",
+				EnvVar: "PROFILE",
 				Value:  "default",
 			},
 			cli.StringFlag{
@@ -67,10 +67,10 @@ func main() {
 				EnvVar: "SIZE",
 			},
 			cli.StringFlag{
-				Name:   "output-dir",
+				Name:   "certs",
 				Usage:  "the path to the directory where the certificates should be saved `PATH`",
 				Value:  "/certs",
-				EnvVar: "OUTPUT_DIR",
+				EnvVar: "CERTS",
 			},
 			cli.StringFlag{
 				Name:   "command",
@@ -78,28 +78,28 @@ func main() {
 				EnvVar: "COMMAND",
 			},
 			cli.StringFlag{
-				Name:   "tls-organization",
+				Name:   "organization",
 				Usage:  "the organization name for the certificate request `NAME`",
 				Value:  "ACP Homeoffice",
-				EnvVar: "TLS_ORGANIZATION",
+				EnvVar: "ORGANIZATION",
 			},
 			cli.StringFlag{
-				Name:   "tls-country",
+				Name:   "country",
 				Usage:  "the country name placed into the certificate request `NAME`",
 				Value:  "GB",
-				EnvVar: "TLS_COUNTRY",
+				EnvVar: "COUNTRY",
 			},
 			cli.StringFlag{
-				Name:   "tls-locality",
+				Name:   "locality",
 				Usage:  "the locality name placed into the certificate `NAME`",
 				Value:  "London",
-				EnvVar: "TLS_LOCALITY",
+				EnvVar: "LOCALITY",
 			},
 			cli.StringFlag{
-				Name:   "tls-province",
+				Name:   "province",
 				Usage:  "the province name placed in the certificate `NAME`",
 				Value:  "London",
-				EnvVar: "TLS_PROVINCE",
+				EnvVar: "PROVINCE",
 			},
 			cli.BoolFlag{
 				Name:   "onetime",
@@ -121,17 +121,17 @@ func main() {
 
 		Action: func(c *cli.Context) error {
 			cfg := Config{
-				CertsDir:        c.String("output-dir"),
-				Country:         c.String("tls-country"),
+				CertsDir:        c.String("certs"),
+				Country:         c.String("country"),
 				Domains:         c.StringSlice("domain"),
-				EndpointProfile: c.String("cfssl-token"),
-				EndpointToken:   c.String("cfssl-token"),
-				EndpointURL:     c.String("cfssl-url"),
+				EndpointProfile: c.String("profile"),
+				EndpointToken:   c.String("token"),
+				EndpointURL:     c.String("url"),
 				ExecCommand:     c.String("exec"),
-				Locality:        c.String("tls-locality"),
+				Locality:        c.String("locality"),
 				Onetime:         c.Bool("onetime"),
-				Organization:    c.String("tls-organization"),
-				Province:        c.String("tls-province"),
+				Organization:    c.String("organization"),
+				Province:        c.String("province"),
 				Size:            c.Int("size"),
 				Timeout:         c.Duration("timeout"),
 				TLSCAPath:       c.String("tls-ca"),

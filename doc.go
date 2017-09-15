@@ -18,7 +18,7 @@ package main
 
 import "time"
 
-const (
+var (
 	// Version is the version on the sidekick
 	Version = "v0.0.1"
 	// GitSHA is the git sha we were built from
