@@ -43,10 +43,15 @@ type SigningRequest struct {
 
 // SigningResponse is what cfssl send back
 type SigningResponse struct {
-	Errors   []string          `json:"errors"`
-	Messages []string          `json:"messages"`
-	Result   map[string]string `json:"result"`
-	Success  bool              `json:"success"`
+	Errors  []SigningError    `json:"errors"`
+	Result  map[string]string `json:"result"`
+	Success bool              `json:"success"`
+}
+
+// SigningError is the cfssl error struct
+type SigningError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 // Config is the configuration for the service

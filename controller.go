@@ -82,6 +82,7 @@ func (c *controller) run() error {
 		log.WithFields(log.Fields{
 			"domains":  strings.Join(c.config.Domains, ","),
 			"endpoint": c.config.EndpointURL,
+			"profile":  c.config.EndpointProfile,
 		}).Info("attempting to acquire certificate from ca")
 
 		// @step: requesting a signing of the certificate
@@ -132,7 +133,7 @@ func (c *controller) run() error {
 func (c *controller) handleCertificateResponse(response *SigningResponse) error {
 	// @check the response was successful
 	if !response.Success {
-		return fmt.Errorf("unsuccessful operation, errors: %s", strings.Join(response.Errors, ","))
+		return fmt.Errorf("unsuccessful operation, errors: %s", response.Errors[0].Message)
 	}
 
 	// @check we have a certificate
@@ -143,8 +144,6 @@ func (c *controller) handleCertificateResponse(response *SigningResponse) error 
 	log.WithFields(log.Fields{
 		"path": c.config.CertificateFile(),
 	}).Info("writing the certificate to disk")
-
-	fmt.Printf("RESULT %v\n", response.Result)
 
 	content := response.Result["certificate"]
 	file, err := os.OpenFile(c.config.CertificateFile(), os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.FileMode(0600))

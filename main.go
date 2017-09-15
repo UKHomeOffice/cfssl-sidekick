@@ -48,7 +48,6 @@ func main() {
 				Name:   "profile",
 				Usage:  "a cfssl profile to use when requesting a certificated `NAME`",
 				EnvVar: "PROFILE",
-				Value:  "default",
 			},
 			cli.StringFlag{
 				Name:   "tls-ca",
