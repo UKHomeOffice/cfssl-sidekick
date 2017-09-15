@@ -150,7 +150,7 @@ func readPrivateKeyFile(filename string) (*rsa.PrivateKey, error) {
 
 // makeOperationTimeout is responsible for making a kill timer
 func makeOperationTimeout(timeout time.Duration) chan interface{} {
-	log.Info("setting a operational timeout of %s", timeout.String())
+	log.Infof("setting a operational timeout of %s", timeout.String())
 
 	doneCh := make(chan interface{}, 0)
 	timer := time.NewTimer(timeout)
