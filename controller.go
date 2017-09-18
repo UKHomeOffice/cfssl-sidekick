@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -161,6 +162,30 @@ func (c *controller) handleCertificateResponse(response *SigningResponse) error 
 
 	if _, err := file.WriteString(content); err != nil {
 		return err
+	}
+
+	// @step: do we need to call an external updater?
+	if c.config.ExecCommand != "" {
+		log.WithFields(log.Fields{
+			"command": c.config.ExecCommand,
+			"timeout": c.config.Timeout.String(),
+		}).Info("calling external command")
+
+		cmd := exec.Command(c.config.ExecCommand, c.config.CertificateFile(), c.config.PrivateKeyFile(), c.config.CAFile())
+		cmd.Start()
+		timer := time.AfterFunc(c.config.Timeout, func() {
+			if err = cmd.Process.Kill(); err != nil {
+				log.Error("external command took too long, operation timed out")
+			}
+		})
+		err = cmd.Wait()
+		timer.Stop()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"command": c.config.ExecCommand,
+				"error":   err.Error(),
+			}).Error("error calling external command")
+		}
 	}
 
 	return nil
