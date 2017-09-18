@@ -57,7 +57,7 @@ func createCertificateRequest(c *Config) (*rsa.PrivateKey, []byte, error) {
 	var writer bytes.Buffer
 	// encode the private key to PEM format
 	if err = pem.Encode(&writer, &pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(private),
 	}); err != nil {
 		return nil, []byte{}, err
