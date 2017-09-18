@@ -143,10 +143,17 @@ func main() {
 		},
 
 		Action: func(c *cli.Context) error {
+			// @step: it's a nice feature to expand any variables in the
+			// command line for domains as it allow us to use name.${KUBE_NAMESPACE}.svc.cluster.local
+			var domains []string
+			for _, x := range c.StringSlice("domain") {
+				domains = append(domains, os.ExpandEnv(x))
+			}
+
 			cfg := Config{
 				CertsDir:               c.String("certs"),
 				Country:                c.String("country"),
-				Domains:                c.StringSlice("domain"),
+				Domains:                domains,
 				EndpointProfile:        c.String("profile"),
 				EndpointToken:          c.String("token"),
 				EndpointURL:            c.String("url"),
