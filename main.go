@@ -157,7 +157,7 @@ func main() {
 				EndpointProfile:        c.String("profile"),
 				EndpointToken:          c.String("token"),
 				EndpointURL:            c.String("url"),
-				ExecCommand:            c.String("exec"),
+				ExecCommand:            c.String("command"),
 				Expiry:                 c.Duration("expiry"),
 				Locality:               c.String("locality"),
 				Onetime:                c.Bool("onetime"),
