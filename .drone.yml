@@ -1,0 +1,36 @@
+workspace:
+  base: /go
+  path: src/github.com/UKHomeOffice/cfssl-sidekick
+
+pipeline:
+  tests:
+    image: golang:1.9
+    commands:
+    - make tests
+    - make static
+
+  latest:
+    image: docker:1.13
+    environment:
+    - DOCKER_HOST=tcp://172.17.0.1:2375
+    secrets: [docker_password]
+    commands:
+    - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest .
+    - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
+    - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:latest
+    when:
+      event: push
+      branch: master
+
+  tagged:
+    image: docker:1.13
+    environment:
+    - DOCKER_HOST=tcp://172.17.0.1:2375
+    secrets: [docker_password]
+    commands:
+    - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:${DRONE_TAG} .
+    - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
+    - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:${DRONE_TAG}
+    when:
+      event: tag
+
