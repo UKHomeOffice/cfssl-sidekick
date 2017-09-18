@@ -204,8 +204,6 @@ func (c *controller) doSigningRequest(request *SigningRequest) (*SigningResponse
 		return nil, err
 	}
 
-	fmt.Printf("CONTENT: %s\n", content)
-
 	response := &SigningResponse{}
 	if err := json.Unmarshal(content, response); err != nil {
 		return nil, err

@@ -103,7 +103,7 @@ glide-install:
 
 test: deps
 	@echo "--> Running the tests"
-	  @if [ ! -d "vendor" ]; then \
+	@if [ ! -d "vendor" ]; then \
     make glide-install; \
   fi
 	@go test -v
