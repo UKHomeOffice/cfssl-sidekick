@@ -65,6 +65,12 @@ func main() {
 				Value:  2048,
 				EnvVar: "SIZE",
 			},
+			cli.DurationFlag{
+				Name:   "expiry",
+				Usage:  "the duration between we rotate the certificate `DURATION`",
+				Value:  (24 * time.Hour) * 90,
+				EnvVar: "EXPIRY",
+			},
 			cli.StringFlag{
 				Name:   "certs",
 				Usage:  "the path to the directory where the certificates should be saved `PATH`",
@@ -105,6 +111,24 @@ func main() {
 				Usage:  "indicated you only want the service to run once and exit `BOOL`",
 				EnvVar: "ONETIME",
 			},
+			cli.StringFlag{
+				Name:   "tls-ca-name",
+				Usage:  "the filename of the ca file if a ca-bundle is included `NAME`",
+				Value:  "tls-ca.pem",
+				EnvVar: "TLS_CA_NAME",
+			},
+			cli.StringFlag{
+				Name:   "tls-cert-name",
+				Usage:  "the filename of the certificate generated `NAME`",
+				Value:  "tls.pem",
+				EnvVar: "TLS_CERT_NAME",
+			},
+			cli.StringFlag{
+				Name:   "tls-key-name",
+				Usage:  "the filename of the private key file when generated `name`",
+				Value:  "tls-key.pem",
+				EnvVar: "TLS_KEY_NAME",
+			},
 			cli.DurationFlag{
 				Name:   "timeout",
 				Usage:  " a timeout for operation, if we've not recieved a certificate in this time, exit `DURATION`",
@@ -120,21 +144,25 @@ func main() {
 
 		Action: func(c *cli.Context) error {
 			cfg := Config{
-				CertsDir:        c.String("certs"),
-				Country:         c.String("country"),
-				Domains:         c.StringSlice("domain"),
-				EndpointProfile: c.String("profile"),
-				EndpointToken:   c.String("token"),
-				EndpointURL:     c.String("url"),
-				ExecCommand:     c.String("exec"),
-				Locality:        c.String("locality"),
-				Onetime:         c.Bool("onetime"),
-				Organization:    c.String("organization"),
-				Province:        c.String("province"),
-				Size:            c.Int("size"),
-				Timeout:         c.Duration("timeout"),
-				TLSCAPath:       c.String("tls-ca"),
-				Verbose:         c.Bool("verbose"),
+				CertsDir:               c.String("certs"),
+				Country:                c.String("country"),
+				Domains:                c.StringSlice("domain"),
+				EndpointProfile:        c.String("profile"),
+				EndpointToken:          c.String("token"),
+				EndpointURL:            c.String("url"),
+				ExecCommand:            c.String("exec"),
+				Expiry:                 c.Duration("expiry"),
+				Locality:               c.String("locality"),
+				Onetime:                c.Bool("onetime"),
+				Organization:           c.String("organization"),
+				Province:               c.String("province"),
+				Size:                   c.Int("size"),
+				Timeout:                c.Duration("timeout"),
+				TLSCAPath:              c.String("tls-ca"),
+				TLSCAFilename:          c.String("tls-ca-name"),
+				TLSCertificateFilename: c.String("tls-cert-name"),
+				TLSPrivateKeyFilename:  c.String("tls-key-name"),
+				Verbose:                c.Bool("verbose"),
 			}
 
 			ctl, err := newController(cfg)

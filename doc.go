@@ -43,9 +43,35 @@ type SigningRequest struct {
 
 // SigningResponse is what cfssl send back
 type SigningResponse struct {
-	Errors  []SigningError    `json:"errors"`
-	Result  map[string]string `json:"result"`
-	Success bool              `json:"success"`
+	Success bool `json:"success"`
+	Result  struct {
+		Bundle struct {
+			Bundle      string      `json:"bundle"`
+			CrlSupport  bool        `json:"crl_support"`
+			Crt         string      `json:"crt"`
+			Expires     time.Time   `json:"expires"`
+			Hostnames   []string    `json:"hostnames"`
+			Issuer      string      `json:"issuer"`
+			Key         string      `json:"key"`
+			KeySize     int         `json:"key_size"`
+			KeyType     string      `json:"key_type"`
+			LeafExpires time.Time   `json:"leaf_expires"`
+			Ocsp        interface{} `json:"ocsp"`
+			OcspSupport bool        `json:"ocsp_support"`
+			Root        string      `json:"root"`
+			Signature   string      `json:"signature"`
+			Status      struct {
+				Rebundled           bool          `json:"rebundled"`
+				ExpiringSKIs        interface{}   `json:"expiring_SKIs"`
+				UntrustedRootStores []interface{} `json:"untrusted_root_stores"`
+				Messages            []string      `json:"messages"`
+				Code                int           `json:"code"`
+			} `json:"status"`
+			Subject string `json:"subject"`
+		} `json:"bundle"`
+		Certificate string `json:"certificate"`
+	} `json:"result"`
+	Errors []SigningError `json:"errors"`
 }
 
 // SigningError is the cfssl error struct
@@ -62,12 +88,12 @@ type Config struct {
 	EndpointToken string
 	// EndpointProfile is the profile to use
 	EndpointProfile string
-	// TLSCAPath is the path to a ca file
-	TLSCAPath string
 	// Domains is a list of domains to get
 	Domains []string
 	// Size is the size of the ceritificate
 	Size int
+	// Expiry the certificate rotation
+	Expiry time.Duration
 	// Organization
 	Organization string
 	// Country
@@ -82,8 +108,18 @@ type Config struct {
 	ExecCommand string
 	// Timeout is the timeout for an operation
 	Timeout time.Duration
+	// TLSCAPath is the path to a ca file
+	TLSCAPath string
+	// TLSCertificatename is the name of the certificate
+	TLSCertificateFilename string
+	// TLSPrivateKeyFilename is the name of the private key
+	TLSPrivateKeyFilename string
+	// TLSCAFilename is the name of the ca file
+	TLSCAFilename string
 	// Onetime indicated the service to run once
 	Onetime bool
+	// UpstreamURL is the upstream url
+	UpstreamURL string
 	// Verbose indicates verbose logging
 	Verbose bool
 }

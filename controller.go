@@ -82,6 +82,7 @@ func (c *controller) run() error {
 		log.WithFields(log.Fields{
 			"domains":  strings.Join(c.config.Domains, ","),
 			"endpoint": c.config.EndpointURL,
+			"expiry":   c.config.Expiry.String(),
 			"profile":  c.config.EndpointProfile,
 		}).Info("attempting to acquire certificate from ca")
 
@@ -118,14 +119,16 @@ func (c *controller) run() error {
 		// indicate a success and stop the operational timeout
 		doneCh <- true
 
-		// @step: write the private key and certificate to disk
-
 		if c.config.Onetime {
 			log.Info("onetime mode enabled, exiting the service")
 			os.Exit(0)
 		}
 
-		time.Sleep(10 * time.Minute)
+		log.WithFields(log.Fields{
+			"duration": c.config.Expiry.String(),
+		}).Info("going to sleep until next certificate rotation")
+
+		time.Sleep(c.config.Expiry)
 	}
 }
 
@@ -137,7 +140,7 @@ func (c *controller) handleCertificateResponse(response *SigningResponse) error 
 	}
 
 	// @check we have a certificate
-	if response.Result["certificate"] == "" {
+	if response.Result.Certificate == "" {
 		return errors.New("no certificate found in the response")
 	}
 
@@ -145,7 +148,11 @@ func (c *controller) handleCertificateResponse(response *SigningResponse) error 
 		"path": c.config.CertificateFile(),
 	}).Info("writing the certificate to disk")
 
-	content := response.Result["certificate"]
+	content := response.Result.Certificate
+	if response.Result.Bundle.Bundle != "" {
+		content = response.Result.Bundle.Bundle
+	}
+
 	file, err := os.OpenFile(c.config.CertificateFile(), os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.FileMode(0600))
 	if err != nil {
 		return err
@@ -196,6 +203,8 @@ func (c *controller) doSigningRequest(request *SigningRequest) (*SigningResponse
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("CONTENT: %s\n", content)
 
 	response := &SigningResponse{}
 	if err := json.Unmarshal(content, response); err != nil {

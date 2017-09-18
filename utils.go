@@ -175,7 +175,9 @@ func makeOperationTimeout(timeout time.Duration) chan interface{} {
 
 // createHTTPClient creates and returns a api client for cfssl
 func createHTTPClient(o *Config) (*http.Client, error) {
-	tlsConfig := &tls.Config{}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
 
 	// @step: build the tls configuration
 	if o.TLSCAPath != "" {
