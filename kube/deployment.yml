@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: example
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        name: example
+    spec:
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      - name: bundle
+        configMap:
+          name: bundle
+      - name: certs
+        emptyDir: {}
+      containers:
+      - name: certs
+        image: quay.io/ukhomeofficedigital/cfssl-sidekick:v0.0.2
+        securityContext:
+          runAsNonRoot: true
+        args:
+        - --certs=/certs
+        - --domain=example.${KUBE_NAMESPACE}.svc.cluster.local
+        - --domain=pod-0.headless-service.${KUBE_NAMESPACE}.svc.cluster.local
+        - --domain=localhost
+        - --expiry=8760h
+        env:
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+        - name: bundle
+          mountPath: /etc/ssl/certs
+          readOnly: true
