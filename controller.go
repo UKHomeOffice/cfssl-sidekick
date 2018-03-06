@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jpillora/backoff"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -76,61 +78,109 @@ func (c *controller) run() error {
 		return fmt.Errorf("failed to encode csr: %s", err)
 	}
 
-	// @step: create an operational timeout
-	doneCh := makeOperationTimeout(c.config.Timeout)
+	// @step: create a backoff with jitter
+	jitter := &backoff.Backoff{Min: 5 * time.Second, Max: 60 * time.Second, Jitter: true, Factor: 1.2}
+	firstrun := true
 
 	for {
-		log.WithFields(log.Fields{
-			"domains":  strings.Join(c.config.Domains, ","),
-			"endpoint": c.config.EndpointURL,
-			"expiry":   c.config.Expiry.String(),
-			"profile":  c.config.EndpointProfile,
-		}).Info("attempting to acquire certificate from ca")
+		err := func() error {
+			ctx, cancel := context.WithTimeout(context.Background(), c.config.Timeout)
+			defer cancel()
 
-		// @step: requesting a signing of the certificate
-		response, err := c.doSigningRequest(&SigningRequest{
-			CertificateRequest: encoded,
-			Profile:            c.config.EndpointProfile,
-			Bundle:             true,
-		})
-
+			return c.handleCertificateRequest(ctx, encoded)
+		}
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err.Error(),
-			}).Error("failed to retrieve certificate signing")
+			log.WithFields(log.Fields{"error": err}).Error("failed to proccess certificate request")
+			if c.config.Onetime || firstrun {
+				os.Exit(1)
+			}
+			// @logic we ONLY retry second run i.e we've already acquired a certficate we're trying to renew
+			time.Sleep(jitter.Duration())
 
-			time.Sleep(5 * time.Second)
 			continue
 		}
-
-		if err := c.handleCertificateResponse(response); err != nil {
-			log.WithFields(log.Fields{
-				"error": err.Error(),
-			}).Error("failed to proccess certificate response")
-
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		log.WithFields(log.Fields{
-			"certificate": c.config.CertificateFile(),
-			"private_key": c.config.PrivateKeyFile(),
-		}).Info("successfully wrote the tls certificates")
-
-		// indicate a success and stop the operational timeout
-		doneCh <- true
+		firstrun = false
+		// @step: we can reset the backoff
+		jitter.Reset()
 
 		if c.config.Onetime {
-			log.Info("onetime mode enabled, exiting the service")
 			os.Exit(0)
 		}
 
+		// @step: we've successfully acquired a certificate lets wait for the expiration
 		log.WithFields(log.Fields{
-			"duration": c.config.Expiry.String(),
-		}).Info("going to sleep until next certificate rotation")
+			"expiration": c.config.Expiry.String(),
+		}).Info("sleeping until the next iteration")
 
 		time.Sleep(c.config.Expiry)
 	}
+}
+
+// handleCertificateRequest is responsible for wrapper a certificate signing request
+func (c *controller) handleCertificateRequest(ctx context.Context, encoded string) error {
+	doneCh := make(chan error, 0)
+	bucket := make(chan struct{}, 1)
+	defer close(bucket)
+
+	go func() {
+		// @logic as long as we have a token to operate continue
+		for range bucket {
+			doneCh <- c.doCertificateRequest(encoded)
+		}
+	}()
+
+	// @step: add a single token into the bucket
+	bucket <- struct{}{}
+	// @step: create a backoff for failed attempts
+	jitter := &backoff.Backoff{Min: 3 * time.Second, Max: 10 * time.Second, Jitter: true, Factor: 1.2}
+	for {
+		// @step: wait for a timeout of a result from the request
+		select {
+		case <-ctx.Done():
+			return errors.New("operation has timed out or been canceled")
+		case err := <-doneCh:
+			if err == nil {
+				return nil
+			}
+			log.WithFields(log.Fields{"error": err.Error()}).Error("unable to process certificate request")
+		}
+		// @step: wait for a period of time and retry
+		time.Sleep(jitter.Duration())
+		// @step: add a token to operate
+		bucket <- struct{}{}
+	}
+}
+
+// doCertificateRequest is responsible for attempting to request a certficate
+func (c *controller) doCertificateRequest(encoded string) error {
+	log.WithFields(log.Fields{
+		"domains":  strings.Join(c.config.Domains, ","),
+		"endpoint": c.config.EndpointURL,
+		"expiry":   c.config.Expiry.String(),
+		"profile":  c.config.EndpointProfile,
+	}).Info("attempting to acquire certificate from ceritificate authority")
+
+	err := func() error {
+		response, err := c.doSigningRequest(&SigningRequest{
+			Bundle:             true,
+			CertificateRequest: encoded,
+			Profile:            c.config.EndpointProfile,
+		})
+		if err != nil {
+			return err
+		}
+		if err := c.handleCertificateResponse(response); err != nil {
+			return err
+		}
+		log.WithFields(log.Fields{
+			"certificate": c.config.CertificateFile(),
+			"private_key": c.config.PrivateKeyFile(),
+		}).Info("successfully wrote the tls certificate")
+
+		return nil
+	}()
+
+	return err
 }
 
 // handleCertificateResponse is responsible for handling the certificate response
