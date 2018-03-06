@@ -1,17 +1,18 @@
-hash: fb0f25657c8876162ffa4a99695726cdcc56c20235aac38ff9c5c0eed6ce6fef
-updated: 2017-09-15T18:36:43.270955812+01:00
+hash: 2be205cfefcaf1a3bb779179752859179301bec10ba33790e7bec7ccb82aab82
+updated: 2018-03-06T15:23:02.464933145Z
 imports:
+- name: github.com/jpillora/backoff
+  version: 8eab2debe79d12b7bd3d10653910df25fa9552ba
 - name: github.com/sirupsen/logrus
-  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
+  version: f4ee69125072b22721efbe639bd0da9c9d19b8cc
 - name: github.com/urfave/cli
-  version: 7fb9c86b14e6a702a4157ccb5a863f07d844a207
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: golang.org/x/crypto
-  version: b0c9c05bfe149df95eb1d25642162cca051e0466
+  version: dd85ac7e6a88fc6ca420478e934de5f1a42dd3c6
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 062cd7e4e68206d8bab9b18396626e855c992658
+  version: 833a04a10549a95dc34458c195cbad61bbb6cb4d
   subpackages:
   - unix
-  - windows
 testImports: []
