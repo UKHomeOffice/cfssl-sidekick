@@ -67,10 +67,18 @@ func (c *controller) run() error {
 	}
 
 	// @step: we generate the certificate request - we first need to check if a key already exists
+	log.WithFields(log.Fields{
+		"hostnames": c.config.Domains,
+	}).Debug("creating certificate request")
+
 	_, csr, err := createCertificateRequest(c.config)
 	if err != nil {
 		return fmt.Errorf("failed to generate csr: %s", err)
 	}
+
+	log.WithFields(log.Fields{
+		"hostnames": c.config.Domains,
+	}).Debug("encoding the certificate request into a CSR")
 
 	// @step: encode the CSR into the pem block
 	encoded, err := encodeCertificateRequest(csr)
@@ -88,7 +96,7 @@ func (c *controller) run() error {
 			defer cancel()
 
 			return c.handleCertificateRequest(ctx, encoded)
-		}
+		}()
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Error("failed to proccess certificate request")
 			if c.config.Onetime || firstrun {
@@ -210,7 +218,7 @@ func (c *controller) handleCertificateResponse(response *SigningResponse) error 
 	}
 	defer file.Close()
 
-	if _, err := file.WriteString(content); err != nil {
+	if _, err = file.WriteString(content); err != nil {
 		return err
 	}
 
