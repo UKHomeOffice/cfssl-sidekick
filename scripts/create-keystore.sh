@@ -50,7 +50,7 @@ create_keystore() {
 # step: the vault-sidekick will pass the file=<filename> or the name.type, we are ASSUMING the ca, key and cert are in .ca, .key and .crt
 CERTIFICATE_FILE=${1}
 PRIVATE_KEY_FILE=${2}
-CA_CERT_FILE=${3}
+CA_CERT_FILE=${1}
 
 # step: at the very least we must have cert and private key
 [ -f "${CERTIFICATE_FILE}" ] || failed "cannot find the certificate file: ${CERTIFICATE_FILE}"
