@@ -16,8 +16,10 @@ pipeline:
     secrets: [docker_password]
     commands:
       - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest .
+      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest -f Dockerfile.jks .
       - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:latest
+      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
     when:
       event: push
       branch: master
@@ -29,8 +31,10 @@ pipeline:
     secrets: [docker_password]
     commands:
       - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG} .
+      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest -f Dockerfile.jks .
       - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG}
+      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
     when:
       event: tag
 
