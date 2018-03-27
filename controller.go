@@ -229,7 +229,13 @@ func (c *controller) handleCertificateResponse(response *SigningResponse) error 
 			"timeout": c.config.Timeout.String(),
 		}).Info("calling external command")
 
-		cmd := exec.Command(c.config.ExecCommand, c.config.CertificateFile(), c.config.PrivateKeyFile(), c.config.CAFile())
+		items := strings.Split(c.config.ExecCommand, " ")
+		args := []string{c.config.CertificateFile(), c.config.PrivateKeyFile(), c.config.CAFile()}
+		if len(items) > 1 {
+			args = items[1:]
+		}
+
+		cmd := exec.Command(items[0], args...)
 		cmd.Start()
 		timer := time.AfterFunc(c.config.Timeout, func() {
 			if err = cmd.Process.Kill(); err != nil {
