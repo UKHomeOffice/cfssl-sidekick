@@ -51,6 +51,7 @@ create_keystore() {
 CERTIFICATE_FILE=${1}
 PRIVATE_KEY_FILE=${2}
 CA_CERT_FILE=${1}
+[[ -n "${3}" ]] && CA_CERT_FILE="${3}"
 
 # step: at the very least we must have cert and private key
 [ -f "${CERTIFICATE_FILE}" ] || failed "cannot find the certificate file: ${CERTIFICATE_FILE}"
