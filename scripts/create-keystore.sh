@@ -3,6 +3,7 @@
 [[ -n ${DEBUG} ]] && set -x
 
 IMPORT_SYSTEM_TRUSTSTORE=${IMPORT_SYSTEM_TRUSTSTORE:-"true"}
+JAVA_CACERTS=${JAVA_CACERTS:-"/etc/ssl/java/cacerts"}
 KEYSTORE_RUNTIME=${KEYSTORE_RUNTIME:-"/etc/keystore"}
 KEYSTORE_FILE=${KEYSTORE_FILE:-"${KEYSTORE_RUNTIME}/keystore.jks"}
 TRUSTSTORE_FILE=${TRUSTSTORE_FILE:-"${KEYSTORE_RUNTIME}/truststore.jks"}
@@ -27,9 +28,9 @@ create_truststore() {
   fi
 
   if [[ ${IMPORT_SYSTEM_TRUSTSTORE} == 'true' ]]; then
-    annonce "Importing /etc/pki/java/cacerts into ${TRUSTSTORE_FILE}."
+    annonce "Importing ${JAVA_CACERTS} into ${TRUSTSTORE_FILE}."
     keytool -importkeystore -destkeystore ${TRUSTSTORE_FILE} \
-      -srckeystore /etc/pki/java/cacerts -srcstorepass changeit \
+      -srckeystore ${JAVA_CACERTS} -srcstorepass changeit \
       -noprompt -storepass changeit &> /dev/null
   fi
 }
