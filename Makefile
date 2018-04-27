@@ -33,6 +33,7 @@ static: golang deps
 docker: static
 	@echo "--> Building the docker image"
 	docker build -t ${REGISTRY}/${AUTHOR}/${NAME}:${VERSION} .
+	docker build -t ${REGISTRY}/${AUTHOR}/${NAME}-jks:${VERSION} -f Dockerfile.jks .
 
 docker-release:
 	@echo "--> Building a release image"
