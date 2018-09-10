@@ -5,20 +5,19 @@
 # Expected Files
 # /certs/tls.pem - Server cert - if missing create
 # /certs/tls-key.pem - Server key - if missing create
-# /etc/ssl/certs/ca.pem - CA Cert (or intermediate CA)
+# /etc/ssl/certs/chain-ca.pem - CA Cert (or intermediate CA)
 # /etc/ssl/certs/ca-bundle.crt - CA Bundle
 
 CERTIFICATE_FILE="${CERTIFCATE_FILE:-/certs/tls.pem}"
 PRIVATE_KEY_FILE="${PRIVATE_KEY_FILE:-/certs/tls-key.pem}"
-
-IMPORT_SYSTEM_TRUSTSTORE=${IMPORT_SYSTEM_TRUSTSTORE:-"true"}
-JAVA_CACERTS=${JAVA_CACERTS:-"/etc/ssl/java/cacerts"}
-KEYSTORE_RUNTIME=${KEYSTORE_RUNTIME:-"/etc/keystore"}
-KEYSTORE_FILE=${KEYSTORE_FILE:-"${KEYSTORE_RUNTIME}/keystore.jks"}
-TRUSTSTORE_FILE=${TRUSTSTORE_FILE:-"${KEYSTORE_RUNTIME}/truststore.jks"}
-
-# step: create the keystore runtime
-mkdir -p ${KEYSTORE_RUNTIME}
+CA_CERT_FILE="${CA_CERT_FILE:-intermediate_ca.pem}"
+IMPORT_SYSTEM_TRUSTSTORE="${IMPORT_SYSTEM_TRUSTSTORE:-true}"
+JAVA_CACERTS="${JAVA_CACERTS:-/etc/ssl/java/cacerts}"
+KEYSTORE_RUNTIME="${KEYSTORE_RUNTIME:-/etc/keystore}"
+KEYSTORE_FILE="${KEYSTORE_FILE:-${KEYSTORE_RUNTIME}/keystore.jks}"
+TRUSTSTORE_FILE="${TRUSTSTORE_FILE:-${KEYSTORE_RUNTIME}/truststore.jks}"
+RELOAD_NGINX="${RELOAD_NGINX:-false}"
+NGINX_PORT="${NGINX_PORT:-10443}"
 
 announce() {
   [ -n "$@" ] && echo "[v] --> $@"
@@ -57,19 +56,20 @@ create_keystore() {
   keytool -keypasswd -new changeit -keystore ${KEYSTORE_FILE} -storepass changeit -alias cert -keypass ''
 }
 
-create_certs() {
-    announce "Create Certificates."
-    [ -z "${DOMAIN}" ] || failed "Certificate Domain name not supplied"
-    /cfssl-sidekick --certs=/certs --expiry=8760h --domain=${DOMAIN}
+create_stores() {
+    sleep 10
+    create_truststore
+    create_keystore
 }
 
 # step: at the very least we must have cert and private key
 if [[ -f "${CERTIFICATE_FILE}" ]] && [[ -f "${PRIVATE_KEY_FILE}" ]]
 then
-    create_truststore
-    create_keystore
+    create_stores
+    if [[ "${RELOAD_NGINX}" == "true" ]]
+    then
+        /usr/bin/trigger_nginx_reload.sh ${NGINX_PORT}
+    fi
 else
-    create_certs
-    create_truststore
-    create_keystore
+    failed "Certificate or Key missing"
 fi

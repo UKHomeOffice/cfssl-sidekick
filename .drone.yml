@@ -1,40 +1,53 @@
 workspace:
-  base: /go
-  path: src/github.com/UKHomeOffice/cfssl-sidekick
+  base: /build
+  path: src/github.com/ukhomeoffice/borders-cfssl
 
 pipeline:
-  tests:
-    image: golang:1.9
-    commands:
-      - make test
-      - make static
-
-  latest:
-    image: docker:1.13
+  build:
+    image: docker:17.09.1
     environment:
       - DOCKER_HOST=tcp://172.17.0.1:2375
-    secrets: [docker_password]
+    secrets:
+      - docker_name
     commands:
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest .
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest -f Dockerfile.jks .
-      - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:latest
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
+      - docker build -t $${DOCKER_NAME} .
     when:
-      event: push
-      branch: master
+      event:
+        - push
+        - pull_request
+        - tag
 
-  tagged:
-    image: docker:1.13
+  image_to_quay:
+    image: docker:17.09.1
     environment:
       - DOCKER_HOST=tcp://172.17.0.1:2375
-    secrets: [docker_password]
+    secrets:
+      - docker_username
+      - docker_password
+      - docker_server
+      - docker_group
+      - docker_name
     commands:
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG} .
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG} -f Dockerfile.jks .
-      - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG}
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
+      - docker login -u=$${DOCKER_USERNAME} -p=$${DOCKER_PASSWORD} $${DOCKER_SERVER}
+      - docker tag $${DOCKER_NAME} $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:latest
+      - docker push $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:latest
+    when:
+      branch: master
+      event: push
+
+  tag_image_to_quay:
+    image: docker:17.09.1
+    environment:
+      - DOCKER_HOST=tcp://172.17.0.1:2375
+    secrets:
+      - docker_username
+      - docker_password
+      - docker_server
+      - docker_group
+      - docker_name
+    commands:
+      - docker login -u=$${DOCKER_USERNAME} -p=$${DOCKER_PASSWORD} $${DOCKER_SERVER}
+      - docker tag $${DOCKER_NAME} $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_SHA}
+      - docker push $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_SHA}
     when:
       event: tag
-
