@@ -10,7 +10,7 @@
 
 CERTIFICATE_FILE="${CERTIFCATE_FILE:-/certs/tls.pem}"
 PRIVATE_KEY_FILE="${PRIVATE_KEY_FILE:-/certs/tls-key.pem}"
-CA_CERT_FILE="${CA_CERT_FILE:-intermediate_ca.pem}"
+CA_CERT_FILE="${CA_CERT_FILE:-chain-ca.pem}"
 IMPORT_SYSTEM_TRUSTSTORE="${IMPORT_SYSTEM_TRUSTSTORE:-true}"
 JAVA_CACERTS="${JAVA_CACERTS:-/etc/ssl/java/cacerts}"
 KEYSTORE_RUNTIME="${KEYSTORE_RUNTIME:-/etc/keystore}"
