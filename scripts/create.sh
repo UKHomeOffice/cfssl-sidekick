@@ -11,6 +11,7 @@
 CERTIFICATE_FILE="${CERTIFCATE_FILE:-/certs/tls.pem}"
 PRIVATE_KEY_FILE="${PRIVATE_KEY_FILE:-/certs/tls-key.pem}"
 CA_CERT_DIR="${CA_CERT_DIR:-/certs}"
+CA_CERT_FILE="${CA_CERT_FILE:-${CA_CERT_DIR}/ca-bundle.pem}"
 IMPORT_SYSTEM_TRUSTSTORE="${IMPORT_SYSTEM_TRUSTSTORE:-true}"
 OPENSSL_CERTS="${OPENSSL_CERTS:-/etc/ssl/certs}"
 JAVA_CACERTS="${JAVA_CACERTS:-/etc/ssl/java/cacerts}"
@@ -32,13 +33,14 @@ create_truststore() {
   announce "Creating a JAVA truststore as ${TRUSTSTORE_FILE}"
   if [[ -d "${CA_CERT_DIR}" ]]
   then
-    find ${CA_CERT_DIR} \( -name '*ca*.crt' -o  -name '*ca*.pem' \) -type f | xargs -r basename >> /tmp/certs_list
+    find ${CA_CERT_DIR} \( -name '*ca*.crt' -o  -name '*ca*.pem' \) -type f -exec basename {} >> /tmp/certs_list \;
     for CA in `cat /tmp/certs_list`
     do
       announce "Importing ${CA} into JAVA truststore"
       keytool -import -alias ${CA%%.*} -file ${CA_CERT_DIR}/${CA} -keystore ${TRUSTSTORE_FILE} -noprompt -storepass changeit -trustcacerts
-      cp ${CA_CERT_DIR}/${CA} ${OPENSSL_CERTS}/
+      cat ${CA_CERT_DIR}/${CA} >> ${CA_CERT_DIR}/ca-bundle.pem
     done
+
   fi
 
   if [[ ${IMPORT_SYSTEM_TRUSTSTORE} == 'true' ]]; then
