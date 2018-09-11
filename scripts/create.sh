@@ -12,6 +12,7 @@ CERTIFICATE_FILE="${CERTIFCATE_FILE:-/certs/tls.pem}"
 PRIVATE_KEY_FILE="${PRIVATE_KEY_FILE:-/certs/tls-key.pem}"
 CA_CERT_DIR="${CA_CERT_DIR:-/certs}"
 IMPORT_SYSTEM_TRUSTSTORE="${IMPORT_SYSTEM_TRUSTSTORE:-true}"
+OPENSSL_CERTS="${OPENSSL_CERTS:-/etc/ssl/certs}"
 JAVA_CACERTS="${JAVA_CACERTS:-/etc/ssl/java/cacerts}"
 KEYSTORE_RUNTIME="${KEYSTORE_RUNTIME:-/etc/keystore}"
 KEYSTORE_FILE="${KEYSTORE_FILE:-${KEYSTORE_RUNTIME}/keystore.jks}"
@@ -35,7 +36,8 @@ create_truststore() {
     for CA in `cat /tmp/certs_list`
     do
       announce "Importing ${CA} into JAVA truststore"
-      keytool -import -alias ${CA%%.*} -file ${CA} -keystore ${TRUSTSTORE_FILE} -noprompt -storepass changeit -trustcacerts
+      keytool -import -alias ${CA%%.*} -file ${CA_CERT_DIR}/${CA} -keystore ${TRUSTSTORE_FILE} -noprompt -storepass changeit -trustcacerts
+      cp ${CA_CERT_DIR}/${CA} ${OPENSSL_CERTS}/
     done
   fi
 
