@@ -8,7 +8,7 @@
 # /etc/ssl/certs/chain-ca.pem - CA Cert (or intermediate CA)
 # /etc/ssl/certs/ca-bundle.crt - CA Bundle
 
-CERTIFICATE_FILE="${CERTIFCATE_FILE:-/certs/tls.pem}"
+CERTIFICATE_FILE="${CERTIFICATE_FILE:-/certs/tls.pem}"
 PRIVATE_KEY_FILE="${PRIVATE_KEY_FILE:-/certs/tls-key.pem}"
 CA_CERT_DIR="${CA_CERT_DIR:-/certs}"
 CA_CERT_FILE="${CA_CERT_FILE:-${CA_CERT_DIR}/ca-bundle.pem}"
