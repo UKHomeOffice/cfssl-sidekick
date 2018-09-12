@@ -38,7 +38,7 @@ create_truststore() {
     do
       announce "Importing ${CA} into JAVA truststore"
       keytool -import -alias ${CA%%.*} -file ${CA_CERT_DIR}/${CA} -keystore ${TRUSTSTORE_FILE} -noprompt -storepass changeit -trustcacerts
-      cat ${CA_CERT_DIR}/${CA} >> ${CA_CERT_DIR}/ca-bundle.pem
+      cat ${CA_CERT_DIR}/${CA} >> ${CA_CERT_FILE}
     done
 
   fi
@@ -59,7 +59,7 @@ create_keystore() {
   announce "Creating a JAVA keystore as ${KEYSTORE_FILE}."
   keytool -importkeystore -destkeystore ${KEYSTORE_FILE} \
     -srckeystore ${KEYSTORE_RUNTIME}/keystore.p12 -srcstoretype pkcs12 \
-    -alias cert -srcstorepass '' -noprompt -storepass changeit || failed "unanle to import the pkcs12 into keystore"
+    -alias cert -srcstorepass '' -noprompt -storepass changeit || failed "unable to import the pkcs12 into keystore"
 
   keytool -keypasswd -new changeit -keystore ${KEYSTORE_FILE} -storepass changeit -alias cert -keypass ''
 }
