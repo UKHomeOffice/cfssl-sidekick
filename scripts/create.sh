@@ -20,6 +20,8 @@ KEYSTORE_FILE="${KEYSTORE_FILE:-${KEYSTORE_RUNTIME}/keystore.jks}"
 TRUSTSTORE_FILE="${TRUSTSTORE_FILE:-${KEYSTORE_RUNTIME}/truststore.jks}"
 RELOAD_NGINX="${RELOAD_NGINX:-false}"
 NGINX_PORT="${NGINX_PORT:-10443}"
+TRUSTED_ALIAS="${TRUSTED_ALIAS:-trustedcert}"
+TRUSTED_CERTIFICATE="${TRUSTED_CERTIFICATE:-/certs/trusted.pem}"
 
 announce() {
   [ -n "$@" ] && echo "[v] --> $@"
@@ -54,7 +56,8 @@ create_truststore() {
 create_keystore() {
   announce "Creating a temporary pkcs12 keystore."
   openssl pkcs12 -export -name cert -in ${CERTIFICATE_FILE} -inkey ${PRIVATE_KEY_FILE} -nodes \
-    -CAfile ${CA_CERT_FILE} -out ${KEYSTORE_RUNTIME}/keystore.p12 -passout pass: || failed "unable to convert certificates pkcs12 format"
+    -CAfile ${CA_CERT_FILE} -out ${KEYSTORE_RUNTIME}/keystore.p12 \
+    -passout pass: || failed "unable to convert certificates pkcs12 format"
 
   announce "Creating a JAVA keystore as ${KEYSTORE_FILE}."
   keytool -importkeystore -destkeystore ${KEYSTORE_FILE} \
@@ -62,6 +65,12 @@ create_keystore() {
     -alias cert -srcstorepass '' -noprompt -storepass changeit || failed "unable to import the pkcs12 into keystore"
 
   keytool -keypasswd -new changeit -keystore ${KEYSTORE_FILE} -storepass changeit -alias cert -keypass ''
+}
+
+add_trusted_certificate() {
+   announce "Adding a trusted certificate to the keystore"
+   keytool -import -alias ${TRUSTED_ALIAS} -file ${TRUSTED_CERTIFICATE} -keystore ${KEYSTORE_FILE} \
+     -storepass changeit -noprompt || failed "Unable to import trusted certificate"
 }
 
 create_stores() {
@@ -78,6 +87,13 @@ then
     then
         /usr/bin/trigger_nginx_reload.sh ${NGINX_PORT}
     fi
+    if [[ -f "${TRUSTED_CERTIFICATE}" ]]
+    then
+        add_trusted_certificate
+    fi
+elif [[ -f "${TRUSTED_CERTIFICATE}" ]]
+then
+    add_trusted_certificate
 else
-    failed "Certificate or Key missing"
+    failed "Certificate / Key or Trusted Certificate missing"
 fi
