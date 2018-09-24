@@ -10,14 +10,14 @@
 
 CERTIFICATE_FILE="${CERTIFICATE_FILE:-/certs/tls.pem}"
 PRIVATE_KEY_FILE="${PRIVATE_KEY_FILE:-/certs/tls-key.pem}"
-CA_CERT_DIR="${CA_CERT_DIR:-/certs}"
+CA_CERT_DIR="${CA_CERT_DIR:-/cacerts}"
 CA_CERT_FILE="${CA_CERT_FILE:-${CA_CERT_DIR}/ca-bundle.pem}"
 IMPORT_SYSTEM_TRUSTSTORE="${IMPORT_SYSTEM_TRUSTSTORE:-true}"
 OPENSSL_CERTS="${OPENSSL_CERTS:-/etc/ssl/certs}"
 JAVA_CACERTS="${JAVA_CACERTS:-/etc/ssl/java/cacerts}"
 KEYSTORE_RUNTIME="${KEYSTORE_RUNTIME:-/etc/keystore}"
 KEYSTORE_FILE="${KEYSTORE_FILE:-${KEYSTORE_RUNTIME}/keystore.jks}"
-TRUSTSTORE_FILE="${TRUSTSTORE_FILE:-${KEYSTORE_RUNTIME}/truststore.jks}"
+TRUSTSTORE_FILE="${TRUSTSTORE_FILE:-${KEYSTORE_RUNTIME}/cacerts}"
 RELOAD_NGINX="${RELOAD_NGINX:-false}"
 NGINX_PORT="${NGINX_PORT:-10443}"
 TRUSTED_ALIAS="${TRUSTED_ALIAS:-trustedcert}"
@@ -35,7 +35,7 @@ create_truststore() {
   announce "Creating a JAVA truststore as ${TRUSTSTORE_FILE}"
   if [[ -d "${CA_CERT_DIR}" ]]
   then
-    find ${CA_CERT_DIR} \( -name '*root*.crt' -o -name '*ca*.crt' -o  -name '*ca*.pem' \) -type f -exec basename {} >> /tmp/certs_list \;
+    find ${CA_CERT_DIR} \( -name '*.crt' -o  -name '*.pem' \) -type f -exec basename {} >> /tmp/certs_list \;
     for CA in `cat /tmp/certs_list`
     do
       announce "Importing ${CA} into JAVA truststore"
@@ -94,6 +94,9 @@ then
 elif [[ -f "${TRUSTED_CERTIFICATE}" ]]
 then
     add_trusted_certificate
+elif [[ -d "${CA_CERT_DIR}" ]]
+then
+    create_truststore
 else
     failed "Certificate / Key or Trusted Certificate missing"
 fi

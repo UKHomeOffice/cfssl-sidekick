@@ -35,9 +35,9 @@ func (c *Config) IsValid() error {
 	return nil
 }
 
-// CAFile returns the path of the private key
+// CAFile returns the path of the ca
 func (c *Config) CAFile() string {
-	return fmt.Sprintf("%s/%s", c.CertsDir, c.TLSCAPath)
+	return fmt.Sprintf("%s/%s", c.TLSCAPath, c.TLSCAFilename)
 }
 
 // PrivateKeyFile returns the path of the private key

@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -179,7 +180,7 @@ func createHTTPClient(o *Config) (*http.Client, error) {
 
 	// @step: build the tls configuration
 	if o.TLSCAPath != "" {
-		caCert, err := ioutil.ReadFile(o.TLSCAPath)
+		caCert, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", o.TLSCAPath, o.TLSCAFilename))
 		if err != nil {
 			return nil, err
 		}
