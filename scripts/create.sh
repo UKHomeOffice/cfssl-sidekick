@@ -35,7 +35,7 @@ create_truststore() {
   announce "Creating a JAVA truststore as ${TRUSTSTORE_FILE}"
   if [[ -d "${CA_CERT_DIR}" ]]
   then
-    find ${CA_CERT_DIR} \( -name '*ca*.crt' -o  -name '*ca*.pem' \) -type f -exec basename {} >> /tmp/certs_list \;
+    find ${CA_CERT_DIR} \( -name '*root*.crt' -o -name '*ca*.crt' -o  -name '*ca*.pem' \) -type f -exec basename {} >> /tmp/certs_list \;
     for CA in `cat /tmp/certs_list`
     do
       announce "Importing ${CA} into JAVA truststore"
