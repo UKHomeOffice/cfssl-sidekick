@@ -20,7 +20,7 @@ import "time"
 
 var (
 	// Version is the version on the sidekick
-	Version = "v0.0.6"
+	Version = "v0.0.7"
 	// GitSHA is the git sha we were built from
 	GitSHA = "no set"
 )
