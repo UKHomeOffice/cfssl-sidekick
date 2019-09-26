@@ -22,7 +22,24 @@ pipeline:
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
     when:
       event: push
-      branch: master
+
+  scan:
+    image: quay.io/ukhomeofficedigital/anchore-submission:latest
+    dockerfile: Dockerfile
+    image_name: quay.io/ukhomeofficedigital/cfssl-sidekick:latest
+    tolerates: medium
+    fail_on_detection: true
+    when:
+      event: push
+
+  scan:
+    image: quay.io/ukhomeofficedigital/anchore-submission:latest
+    dockerfile: Dockerfile
+    image_name: quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
+    tolerates: medium
+    fail_on_detection: true
+    when:
+      event: push
 
   tagged:
     image: docker:1.13
@@ -37,4 +54,3 @@ pipeline:
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
     when:
       event: tag
-
