@@ -38,3 +38,17 @@ pipeline:
     when:
       event: tag
 
+  scan:
+       # The location of the drone plugin
+     image: quay.io/ukhomeofficedigital/anchore-submission:latest
+       # The optional path of a Dockerfile
+     dockerfile: Dockerfile.jks
+       # Note the lack of double $ here (due to the way drone injects variables"
+     image_name: cfssl-sidekick:${DRONE_COMMIT_SHA}
+       # This indicates we are willing tolerate any vulnerabilities which are below medium
+     tolerates: medium
+
+     fail_on_detection: false
+
+     when:
+       event: [push, tag]
