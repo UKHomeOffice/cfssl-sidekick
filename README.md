@@ -43,6 +43,8 @@ We always produce a Java version, which includes a create-keystore.sh script use
    valueFrom:
      fieldRef:
        fieldPath: metadata.namespace
+ - name: KEYSTORE_PASSWORD
+   value: anythingelse
  volumeMounts:
  - name: certs
    mountPath: /certs

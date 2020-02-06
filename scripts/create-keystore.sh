@@ -7,7 +7,7 @@ JAVA_CACERTS=${JAVA_CACERTS:-"/etc/ssl/java/cacerts"}
 KEYSTORE_RUNTIME=${KEYSTORE_RUNTIME:-"/etc/keystore"}
 KEYSTORE_FILE=${KEYSTORE_FILE:-"${KEYSTORE_RUNTIME}/keystore.jks"}
 TRUSTSTORE_FILE=${TRUSTSTORE_FILE:-"${KEYSTORE_RUNTIME}/truststore.jks"}
-
+KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD:-"changeit"}
 # step: create the keystore runtime
 mkdir -p ${KEYSTORE_RUNTIME}
 
@@ -24,14 +24,14 @@ create_truststore() {
   if [ -f "${CA_CERT_FILE}" ]; then
     annonce "Importing the CA ${CA_CERT_FILE} into the keystore"
     keytool -import -alias ca -file ${CA_CERT_FILE} -keystore ${TRUSTSTORE_FILE} \
-      -noprompt -storepass changeit -trustcacerts
+      -noprompt -storepass ${KEYSTORE_PASSWORD} -trustcacerts
   fi
 
   if [[ ${IMPORT_SYSTEM_TRUSTSTORE} == 'true' ]]; then
     annonce "Importing ${JAVA_CACERTS} into ${TRUSTSTORE_FILE}."
     keytool -importkeystore -destkeystore ${TRUSTSTORE_FILE} \
       -srckeystore ${JAVA_CACERTS} -srcstorepass changeit \
-      -noprompt -storepass changeit &> /dev/null
+      -noprompt -storepass ${KEYSTORE_PASSWORD} &> /dev/null
   fi
 }
 
@@ -43,9 +43,9 @@ create_keystore() {
   annonce "Creating a JAVA keystore as ${KEYSTORE_FILE}."
   keytool -importkeystore -destkeystore ${KEYSTORE_FILE} \
     -srckeystore ${KEYSTORE_RUNTIME}/keystore.p12 -srcstoretype pkcs12 \
-    -alias cert -srcstorepass '' -noprompt -storepass changeit || failed "unanle to import the pkcs12 into keystore"
+    -alias cert -srcstorepass '' -noprompt -storepass ${KEYSTORE_PASSWORD} || failed "unanle to import the pkcs12 into keystore"
 
-  keytool -keypasswd -new changeit -keystore ${KEYSTORE_FILE} -storepass changeit -alias cert -keypass ''
+  keytool -keypasswd -new changeit -keystore ${KEYSTORE_FILE} -storepass ${KEYSTORE_PASSWORD} -alias cert -keypass ''
 }
 
 # step: the vault-sidekick will pass the file=<filename> or the name.type, we are ASSUMING the ca, key and cert are in .ca, .key and .crt
