@@ -7,6 +7,7 @@ JAVA_CACERTS=${JAVA_CACERTS:-"/etc/ssl/java/cacerts"}
 KEYSTORE_RUNTIME=${KEYSTORE_RUNTIME:-"/etc/keystore"}
 KEYSTORE_FILE=${KEYSTORE_FILE:-"${KEYSTORE_RUNTIME}/keystore.jks"}
 TRUSTSTORE_FILE=${TRUSTSTORE_FILE:-"${KEYSTORE_RUNTIME}/truststore.jks"}
+INTERMEDIATE_PASSWORD=${INTERMEDIATE_PASSWORD:-"changeit"}
 KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD:-"changeit"}
 # step: create the keystore runtime
 mkdir -p ${KEYSTORE_RUNTIME}
@@ -23,15 +24,15 @@ create_truststore() {
   annonce "Creating a JAVA truststore as ${TRUSTSTORE_FILE}"
   if [ -f "${CA_CERT_FILE}" ]; then
     annonce "Importing the CA ${CA_CERT_FILE} into the keystore"
-    keytool -import -alias ca -file ${CA_CERT_FILE} -keystore ${TRUSTSTORE_FILE} \
+    keytool -importcert -alias ca -file ${CA_CERT_FILE} -keystore ${TRUSTSTORE_FILE} \
       -noprompt -storepass ${KEYSTORE_PASSWORD} -trustcacerts
   fi
 
   if [[ ${IMPORT_SYSTEM_TRUSTSTORE} == 'true' ]]; then
     annonce "Importing ${JAVA_CACERTS} into ${TRUSTSTORE_FILE}."
-    keytool -importkeystore -destkeystore ${TRUSTSTORE_FILE} \
-      -srckeystore ${JAVA_CACERTS} -srcstorepass changeit \
-      -noprompt -storepass ${KEYSTORE_PASSWORD} &> /dev/null
+    keytool -importkeystore -destkeystore ${TRUSTSTORE_FILE} -deststorepass ${KEYSTORE_PASSWORD} \
+      -srckeystore ${JAVA_CACERTS} -srcstorepass ${INTERMEDIATE_PASSWORD} \
+      -noprompt &> /dev/null
   fi
 }
 
@@ -41,11 +42,9 @@ create_keystore() {
     -CAfile ${CA_CERT_FILE} -out ${KEYSTORE_RUNTIME}/keystore.p12 -passout pass: || failed "unable to convert certificates pkcs12 format"
 
   annonce "Creating a JAVA keystore as ${KEYSTORE_FILE}."
-  keytool -importkeystore -destkeystore ${KEYSTORE_FILE} \
+  keytool -importkeystore -destkeystore ${KEYSTORE_FILE} -deststorepass ${KEYSTORE_PASSWORD} -deststoretype pkcs12 \
     -srckeystore ${KEYSTORE_RUNTIME}/keystore.p12 -srcstoretype pkcs12 \
-    -alias cert -srcstorepass '' -noprompt -storepass ${KEYSTORE_PASSWORD} || failed "unanle to import the pkcs12 into keystore"
-
-  keytool -keypasswd -new changeit -keystore ${KEYSTORE_FILE} -storepass ${KEYSTORE_PASSWORD} -alias cert -keypass ''
+    -alias cert -srcstorepass '' -destkeypass ${KEYSTORE_PASSWORD} -noprompt || failed "unable to import the pkcs12 into keystore"
 }
 
 # step: the vault-sidekick will pass the file=<filename> or the name.type, we are ASSUMING the ca, key and cert are in .ca, .key and .crt
