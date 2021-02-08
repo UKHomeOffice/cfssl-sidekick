@@ -37,4 +37,3 @@ pipeline:
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
     when:
       event: tag
-
