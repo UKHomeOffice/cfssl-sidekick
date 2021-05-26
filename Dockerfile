@@ -1,4 +1,4 @@
-FROM alpine:3.9
+FROM alpine:20210212
 MAINTAINER Rohith Jayawardene <gambol99@gmail.com>
 
 RUN apk add curl openssl --update && \
