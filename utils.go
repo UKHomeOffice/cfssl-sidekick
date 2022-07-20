@@ -64,7 +64,7 @@ func createCertificateRequest(c *Config) (*rsa.PrivateKey, []byte, error) {
 	}
 
 	// @step: write the private key to file
-	file, err := os.OpenFile(c.PrivateKeyFile(), os.O_TRUNC|os.O_CREATE|os.O_RDWR, os.FileMode(0600))
+	file, err := os.OpenFile(c.PrivateKeyFile(), os.O_TRUNC|os.O_CREATE|os.O_RDWR, os.FileMode(0644))
 	if err != nil {
 		return nil, []byte{}, err
 	}
