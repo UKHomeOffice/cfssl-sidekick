@@ -10,13 +10,13 @@ pipeline:
       - make static
 
   latest:
-    image: docker:1.13
+    image: docker:20.10.21
     environment:
       - DOCKER_HOST=tcp://172.17.0.1:2375
     secrets: [docker_password]
     commands:
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest .
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest -f Dockerfile.jks .
+      - docker build --target main -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest .
+      - docker build --target jks -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest .
       - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:latest
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
@@ -25,16 +25,15 @@ pipeline:
       branch: master
 
   tagged:
-    image: docker:1.13
+    image: docker:20.10.21
     environment:
       - DOCKER_HOST=tcp://172.17.0.1:2375
     secrets: [docker_password]
     commands:
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG} .
-      - docker build -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG} -f Dockerfile.jks .
+      - docker build --target main -t quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG} .
+      - docker build --target jks -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG} .
       - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG}
       - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
     when:
       event: tag
-
