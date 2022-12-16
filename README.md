@@ -52,4 +52,3 @@ We always produce a Java version, which includes a create-keystore.sh script use
    mountPath: /etc/ssl/certs
    readOnly: true
 ```
-
