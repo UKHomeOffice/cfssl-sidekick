@@ -1,39 +1,81 @@
+kind: pipeline
+type: kubernetes
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+services:
+- name: docker
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+
 workspace:
-  base: /go
-  path: src/github.com/UKHomeOffice/cfssl-sidekick
+  path: /go/src/github.com/UKHomeOffice/cfssl-sidekick
 
-pipeline:
-  tests:
-    image: golang:1.9
-    commands:
-      - make test
-      - make static
+steps:
+- name: tests
+  image: golang:1.9
+  volumes:
+  - name: deps
+    path: /go
+  commands:
+  - make test
+  - make static
 
-  latest:
-    image: docker:20.10.21
-    environment:
-      - DOCKER_HOST=tcp://172.17.0.1:2375
-    secrets: [docker_password]
-    commands:
-      - docker build --target main -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest .
-      - docker build --target jks -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest .
-      - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:latest
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
-    when:
-      event: push
-      branch: master
+- name: build_docker_image
+  pull: if-not-exists
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+  volumes:
+  - name: deps
+    path: /go
+  commands:
+  # wait for docker service to be up before running docker build
+  - /usr/local/bin/wait
+  - docker build --target main -t quay.io/ukhomeofficedigital/cfssl-sidekick:latest . --no-cache
+  - docker build --target jks -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest . --no-cache
+  when:
+    event:
+    - push
+    - tag
 
-  tagged:
-    image: docker:20.10.21
-    environment:
-      - DOCKER_HOST=tcp://172.17.0.1:2375
-    secrets: [docker_password]
-    commands:
-      - docker build --target main -t quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG} .
-      - docker build --target jks -t quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG} .
-      - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG}
-      - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
-    when:
-      event: tag
+- name: image_to_quay
+  pull: if-not-exists
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+  commands:
+  - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
+  - docker tag quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/cfssl-sidekick:latest
+  - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_COMMIT_SHA}
+  - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:latest
+  - docker tag quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
+  - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_COMMIT_SHA}
+  - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:latest
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  when:
+    event:
+    - push
+    branch:
+    - master
+
+- name: tagged_image_to_quay
+  pull: if-not-exists
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+  commands:
+  - docker login -u="ukhomeofficedigital+cfssl_sidekick" -p=$${DOCKER_PASSWORD} quay.io
+  - docker tag quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG}
+  - docker push quay.io/ukhomeofficedigital/cfssl-sidekick:$${DRONE_TAG}
+  - docker tag quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
+  - docker push quay.io/ukhomeofficedigital/cfssl-sidekick-jks:$${DRONE_TAG}
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+  when:
+    event:
+    - tag
+
+
+volumes:
+- name: deps
+  temp: {}
